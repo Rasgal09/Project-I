@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - SecureNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+.register-card {
+    max-width: 400px;
+    margin: 3rem auto;
+}
+.login-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card register-card">
+    <h2 style="margin-bottom: 1.5rem; text-align: center;">Create Account</h2>
+
+    {% if error %}
+        <div class="alert alert-danger" style="margin-bottom: 1rem;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'register' %}">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Choose a username" required autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Choose a password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Register</button>
+    </form>
+
+    <div class="login-link">
+        Already have an account? <a href="{% url 'login' %}">Login here</a>
+    </div>
+</div>
+{% endblock %}

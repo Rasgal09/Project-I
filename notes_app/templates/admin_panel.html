@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Control Panel - SecureNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+@media (max-width: 768px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.table-responsive {
+    overflow-x: auto;
+}
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+}
+.admin-table th, .admin-table td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+.admin-table th {
+    color: var(--text-secondary);
+}
+.badge {
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+.badge-admin {
+    background-color: #e2f0fe;
+    color: var(--primary);
+}
+.badge-blocked {
+    background-color: #fde8e8;
+    color: var(--danger);
+}
+.badge-active {
+    background-color: #eafaf1;
+    color: var(--success);
+}
+.admin-note-card {
+    border-left: 3px solid #ffcc00;
+    background-color: var(--light-gray);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+.log-item {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed #eee;
+}
+.log-critical {
+    color: var(--danger);
+    font-weight: bold;
+}
+.log-warning {
+    color: #d97706;
+}
+.log-info {
+    color: #3b82f6;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1.5rem;">Admin Control Panel</h2>
+
+<div class="admin-grid">
+    <div class="card">
+        <h3>User Accounts</h3>
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>Role</th>
+                        
+                        {% comment %}
+                        FLAW 4: A09 - Security Logging and Monitoring Failures (Status & Actions)
+                        Context: In the vulnerable configuration, administrators cannot see 
+                        user block statuses, failed login attempt counters, or execute account blocks.
+                        
+                        [INCORRECT CODE - ACTIVE]
+                        Under the active version, the Status and Actions columns are hidden from the admin.
+                        {% endcomment %}
+                        
+                        {% if logs is not None %}
+                            <th>Status</th>
+                            <th>Actions</th>
+                        {% endif %}
+                        
+                        {% comment %}
+                        [CORRECT CODE - COMMENTED]
+                        The secure implementation renders columns allowing the admin to monitor and block:
+                        <th>Status</th>
+                        <th>Actions</th>
+                        {% endcomment %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td style="font-family: monospace; font-size: 0.8rem; color: #888;">{{ u.password|slice:":12" }}{% if u.password|length > 12 %}...{% endif %}</td>
+                            <td>
+                                {% if u.is_admin %}
+                                    <span class="badge badge-admin">Admin</span>
+                                {% else %}
+                                    <span>User</span>
+                                {% endif %}
+                            </td>
+                            
+                            {% comment %}
+                            FLAW 4: A09 - Active table columns (Rendered only when monitoring is fixed)
+                            [INCORRECT CODE - ACTIVE]
+                            {% endcomment %}
+                            {% if logs is not None %}
+                                <td>
+                                    {% if u.is_blocked %}
+                                        <span class="badge badge-blocked">Blocked</span>
+                                    {% else %}
+                                        <span class="badge badge-active">Active</span>
+                                    {% endif %}
+                                    <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                                        Failed attempts: {{ u.failed_login_attempts }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if not u.is_admin %}
+                                        {% if u.is_blocked %}
+                                            <a href="?action=unblock&user_id={{ u.id }}" class="btn" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; color: var(--success); border-color: var(--success);">Unblock</a>
+                                        {% else %}
+                                            <a href="?action=block&user_id={{ u.id }}" class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;">Block</a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-style: italic;">No Actions</span>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                            
+                            {% comment %}
+                            [CORRECT CODE - COMMENTED]
+                            In the correct version, these cells are parsed and displayed:
+                            <td>{% if u.is_blocked %}Blocked{% else %}Active{% endif %} ... </td>
+                            <td><a href="?action=block...">Block</a> ... </td>
+                            {% endcomment %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>All Users' Notes</h3>
+        <div style="margin-top: 1rem;">
+            {% if notes %}
+                {% for note in notes %}
+                    <div class="admin-note-card">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                            <span>User: <strong>{{ note.user.username }}</strong></span>
+                        </div>
+                        <p style="white-space: pre-wrap; font-size: 0.9rem; margin-top: 0.25rem;">{{ note.content }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-secondary); text-align: center; padding: 1rem 0;">
+                    No notes saved.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% comment %}
+FLAW 4: A09 - Security Logs Panel
+Context: If security monitoring is disabled, the administration cannot view
+warning or critical alert logs inside the control dashboard.
+
+[INCORRECT CODE - ACTIVE]
+The active version completely hides the Security Logs section.
+{% endcomment %}
+
+{% if logs is not None %}
+    <div class="card" style="margin-top: 1.5rem; border-color: var(--danger);">
+        <h3 style="color: var(--danger); margin-bottom: 1rem;">Security Logs & Alerts</h3>
+        <div style="background-color: var(--light-gray); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.85rem;">
+            {% if logs %}
+                {% for log in logs %}
+                    <div class="log-item {% if log.severity == 'CRITICAL' %}log-critical{% elif log.severity == 'WARNING' %}log-warning{% else %}log-info{% endif %}">
+                        [{{ log.created_at|date:"Y-m-d H:i:s" }}] [{{ log.severity }}] {{ log.message }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-secondary); text-align: center;">No logs recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+{% comment %}
+[CORRECT CODE - COMMENTED]
+Correct: Render the Security Logs panel to allow active system monitoring.
+<div class="card"> ... Security Logs ... </div>
+{% endcomment %}
+
+{% endblock %}
