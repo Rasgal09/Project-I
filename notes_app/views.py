@@ -32,7 +32,7 @@ def login_view(request):
         # # FLAW 4: A09 - Security Logging and Monitoring Failures (No Logging)
         # # -------------------------------------------------------------------------
 
-        # >>> START OF INCORRECT CODE (Wrap this entire block in triple quotes when securing the app) >>>
+        # >>> START OF INCORRECT CODE >>>
         cursor = connection.cursor()
         query = f"SELECT id, username, password, is_admin, is_blocked, failed_login_attempts FROM notes_app_customuser WHERE username = '{username}'"
         cursor.execute(query)
@@ -55,12 +55,11 @@ def login_view(request):
 
         # # -------------------------------------------------------------------------
         # # REMEDIATION (A03, A02, A07, A09)
-        # # Remove the triple quotes (""") below to activate this secure code block.
         # # -------------------------------------------------------------------------
         
         
         # >>> START OF CORRECT CODE >>>
-        user = CustomUser.objects.filter(username=username).first()  # Prevents SQL Injection using ORM (A03)
+        """ user = CustomUser.objects.filter(username=username).first()  # Prevents SQL Injection using ORM (A03)
         if not user:
             error = "Invalid username or password."
             SecurityLog.objects.create(
@@ -96,7 +95,7 @@ def login_view(request):
                     SecurityLog.objects.create(
                         message=f"CRITICAL: User '{user.username}' has reached {user.failed_login_attempts} failed login attempts consecutively!", 
                         severity='CRITICAL'  # Critical log for suspected brute-force attempt (A09)
-                    )
+                    ) """
         # <<< END OF CORRECT CODE <<<
 
     return render(request, 'login.html', {'error': error})
@@ -120,13 +119,12 @@ def register_view(request):
             # # FLAW 2: A02 - Cryptographic Failures (Plaintext Password Storage)
             # # -------------------------------------------------------------------------
 
-            # >>> START OF INCORRECT CODE (Wrap this entire block in triple quotes when securing the app) >>>
+            # >>> START OF INCORRECT CODE >>>
             CustomUser.objects.create(username=username, password=password, is_admin=False)
             # <<< END OF INCORRECT CODE <<<
 
             # # -------------------------------------------------------------------------
             # # REMEDIATION (A02)
-            # # Remove the triple quotes (""") below to activate this secure code block.
             # # -------------------------------------------------------------------------
 
 
@@ -175,7 +173,7 @@ def admin_panel_view(request):
     # # FLAW 4: A09 - Security Logging and Monitoring Failures (Bypassed Status Actions)
     # # -------------------------------------------------------------------------
 
-    # >>> START OF INCORRECT CODE (Wrap this entire block in triple quotes when securing the app) >>>
+    # >>> START OF INCORRECT CODE >>>
     if 'user_id' not in request.session:
         return redirect('login')
     
@@ -186,7 +184,6 @@ def admin_panel_view(request):
 
     # # -------------------------------------------------------------------------
     # # REMEDIATION (A01, A09)
-    # # Remove the triple quotes (""") below to activate this secure code block.
     # # -------------------------------------------------------------------------
     
     

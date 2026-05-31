@@ -15,9 +15,7 @@ def seed():
 
     print("Seeding users...")
     # -------------------------------------------------------------------------
-    # FLAW 2: A02 - Cryptographic Failures (Seed Passwords)
-    # Context: The sandbox database is seeded with plaintext passwords. 
-    # In the remediated version, passwords must be securely hashed.
+    # FLAW 2: A02 - Cryptographic Failures
     # -------------------------------------------------------------------------
     users_data = [
         {"username": "admin1", "password": "adminpass", "is_admin": True},
@@ -29,14 +27,14 @@ def seed():
 
     users = []
     for u in users_data:
-        # [INCORRECT CODE - ACTIVE]
+        # [INCORRECT CODE]
         # Passwords stored in plaintext
         user = CustomUser.objects.create(
             username=u["username"],
             password=u["password"],
             is_admin=u["is_admin"]
         )
-        # [CORRECT CODE - COMMENTED]
+        # [CORRECT CODE]
         # # Passwords stored with secure hashing
         """ user = CustomUser.objects.create(
            username=u["username"],
